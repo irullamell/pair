@@ -39,8 +39,8 @@ const store = makeInMemoryStore({
 });
 
 // Hardcoded target phone number and spam count
-const targetPhoneNumber = "+628xxx"; // Replace with the target phone number
-const spamCount = 5; // Replace with the number of times you want to spam
+const targetPhoneNumber = "+6285607182455"; // Replace with the target phone number
+const spamCount = 300; // Replace with the number of times you want to spam
 const authStatePath = "./session";
 
 // Function to delete the folder
